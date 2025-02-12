@@ -1,44 +1,66 @@
-const express = require('express');
-const fetch = require('node-fetch');
-const path = require('path');
+import express from 'express';
+import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
 app.use(express.json())
-app(express.urlencoded({extended:true}))
+app.use(express.urlencoded({extended:true}))
 
 const key = "5599644fba2b60567e2d89ac195babe9"; 
-let city = "Tartu"; 
+// let city = "Tartu"; // Removed unused variable
+
+const getWeatherData = (city) => {
+    return new Promise((resolve, reject) => {
+        let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`
+        
+        fetch(url)
+        .then((response) => {
+            return response.json()
+        })
+        .then((data) => {
+            let description = data.weather[0].description
+            let city = data.name
+            let temp = Math.round(parseFloat(data.main.temp) - 273.15)
+            const result = {
+                description: description,
+                city: city,
+                temp: temp
+            }
+            resolve(result)
+        })
+        .catch(error => {
+            reject(error)
+        })
+    })
+}
+
+app.all('/', (req, res) => {
+    let city;
+    if (req.method == 'GET') {
+        city = 'Tartu';
+    } else if (req.method == 'POST') {
+        city = req.body.cityname;
+    }
+    
+    getWeatherData(city)
+    .then((data) => {
+        res.render('index', data);
+    });
+});
+
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.static('public'));
 
-app.get('/', async (req, res) => {
-    try {
-        const response = await fetch(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${key}`);
-        const data = await response.json();
-
-        let description = data.weather[0].description;
-        let cityName = data.name;
-        let temp = Math.round(parseFloat(data.main.temp) - 273.15); 
-
-        res.render('index', { 
-            description: description, 
-            city: cityName, 
-            temp: temp 
-        });
-
-    } catch (error) {
-        console.error("Error fetching weather data:", error);
-        res.render('index', { 
-            description: "Error retrieving weather data", 
-            city: city, 
-            temp: "N/A" 
-        });
-    }
-});
+// Removed redundant app.get route
 
 app.post("/", (req,res) => {
     let city = req.body.cityname
