@@ -13,7 +13,6 @@ app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
 const key = "5599644fba2b60567e2d89ac195babe9"; 
-// let city = "Tartu"; // Removed unused variable
 
 const getWeatherData = (city) => {
     return new Promise((resolve, reject) => {
@@ -30,11 +29,13 @@ const getWeatherData = (city) => {
             const result = {
                 description: description,
                 city: city,
-                temp: temp
+                temp: temp,
+                error: null
             }
             resolve(result)
         })
         .catch(error => {
+            console.error(error);
             reject(error)
         })
     })
@@ -51,7 +52,13 @@ app.all('/', (req, res) => {
     getWeatherData(city)
     .then((data) => {
         res.render('index', data);
-    });
+    })
+    .catch(error => {
+        res.render('index', {
+            error: 'Problem with getting data, try again...'
+        })
+    })
+    
 });
 
 
