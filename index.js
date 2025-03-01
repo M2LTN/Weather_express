@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
-const key = "5599644fba2b60567e2d89ac195babe9"; 
+const key = //ei pane siia oma api sest see security risk; 
 
 const getWeatherData = (city) => {
     return new Promise((resolve, reject) => {
